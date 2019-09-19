@@ -83,7 +83,8 @@
     "serve": "webpack-dev-server --progress --inline",
     "build": "cross-env webpack && webpack -p && node tsBannerGenerator.js",
     "note": "tuie --tag=$(git describe --tags)",
-    "tslint": "tslint index.d.ts"
+    "tslint": "tslint index.d.ts",
+    "precommit": ["build"]
   },
   "dependencies": {
     "@types/codemirror": "0.0.71",
