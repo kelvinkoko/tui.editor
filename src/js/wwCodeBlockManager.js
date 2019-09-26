@@ -4,6 +4,7 @@
  */
 import $ from 'jquery';
 import util from 'tui-code-snippet';
+import hljs from 'highlight.js';
 
 import domUtils from './domUtils';
 
@@ -206,7 +207,13 @@ class WwCodeBlockManager {
 
       const resultText = $pre.text().replace(/\s+$/, '');
       $pre.empty();
-      $pre.html(resultText ? sanitizeHtmlCode(resultText) : brString);
+      let hightlighted = '';
+      if (lang) {
+        hightlighted = hljs.highlight(lang, sanitizeHtmlCode(resultText)).value;
+      } else {
+        hightlighted = hljs.highlightAuto(sanitizeHtmlCode(resultText)).value;
+      }
+      $pre.html(resultText ? hightlighted : brString);
 
       if (lang) {
         $pre.attr('data-language', lang);
