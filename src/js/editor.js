@@ -823,6 +823,10 @@ class ToastUIEditor {
     this.wwEditor.setPlaceholder(placeholder);
   }
 
+  setOnEditorButtonClickAction(action) {
+    this.wwEditor.setOnEditorButtonClickAction(action);
+  }
+
   /**
    * Get instance of TUIEditor
    * @memberof ToastUIEditor
