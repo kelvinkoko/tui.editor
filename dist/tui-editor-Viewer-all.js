@@ -8681,6 +8681,10 @@ var Convertor = function () {
 
       var markdown = (0, _toMark2.default)(this._appendAttributeForBrIfNeed(html), toMarkOptions);
 
+      // Remove highlight element in code block
+      var wrapper = document.createElement('div');
+      wrapper.innerHTML = markdown;
+      markdown = wrapper.textContent;
       markdown = this.eventManager.emitReduce('convertorAfterHtmlToMarkdownConverted', markdown);
 
       _tuiCodeSnippet2.default.forEach(markdown.split('\n'), function (line, index) {

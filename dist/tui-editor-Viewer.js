@@ -6,14 +6,14 @@
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("jquery"), require("tui-code-snippet"), require("markdown-it"), require("to-mark"), require("highlight.js"));
+		module.exports = factory(require("jquery"), require("tui-code-snippet"), require("highlight.js"), require("markdown-it"), require("to-mark"));
 	else if(typeof define === 'function' && define.amd)
-		define(["jquery", "tui-code-snippet", "markdown-it", "to-mark", "highlight.js"], factory);
+		define(["jquery", "tui-code-snippet", "highlight.js", "markdown-it", "to-mark"], factory);
 	else if(typeof exports === 'object')
-		exports["Editor"] = factory(require("jquery"), require("tui-code-snippet"), require("markdown-it"), require("to-mark"), require("highlight.js"));
+		exports["Editor"] = factory(require("jquery"), require("tui-code-snippet"), require("highlight.js"), require("markdown-it"), require("to-mark"));
 	else
-		root["tui"] = root["tui"] || {}, root["tui"]["Editor"] = factory(root["$"], (root["tui"] && root["tui"]["util"]), root["markdownit"], root["toMark"], root["hljs"]);
-})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_1__, __WEBPACK_EXTERNAL_MODULE_22__, __WEBPACK_EXTERNAL_MODULE_23__, __WEBPACK_EXTERNAL_MODULE_32__) {
+		root["tui"] = root["tui"] || {}, root["tui"]["Editor"] = factory(root["$"], (root["tui"] && root["tui"]["util"]), root["hljs"], root["markdownit"], root["toMark"]);
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_1__, __WEBPACK_EXTERNAL_MODULE_14__, __WEBPACK_EXTERNAL_MODULE_23__, __WEBPACK_EXTERNAL_MODULE_24__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -232,7 +232,7 @@ var _jquery = __webpack_require__(0);
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
-var _lazyRunner = __webpack_require__(20);
+var _lazyRunner = __webpack_require__(21);
 
 var _lazyRunner2 = _interopRequireDefault(_lazyRunner);
 
@@ -381,16 +381,9 @@ exports.default = Preview;
 /***/ }),
 
 /***/ 14:
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, exports) {
 
-"use strict";
-
-
-var isMac = /Mac/.test(navigator.platform);
-
-module.exports = {
-  isMac: isMac
-};
+module.exports = __WEBPACK_EXTERNAL_MODULE_14__;
 
 /***/ }),
 
@@ -449,6 +442,20 @@ module.exports = Viewer;
 /***/ }),
 
 /***/ 15:
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var isMac = /Mac/.test(navigator.platform);
+
+module.exports = {
+  isMac: isMac
+};
+
+/***/ }),
+
+/***/ 16:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -714,7 +721,7 @@ exports.default = EventManager;
 
 /***/ }),
 
-/***/ 16:
+/***/ 17:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -804,7 +811,7 @@ exports.default = new ExtManager();
 
 /***/ }),
 
-/***/ 17:
+/***/ 18:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -828,11 +835,11 @@ var _tuiCodeSnippet = __webpack_require__(1);
 
 var _tuiCodeSnippet2 = _interopRequireDefault(_tuiCodeSnippet);
 
-var _markdownIt = __webpack_require__(22);
+var _markdownIt = __webpack_require__(23);
 
 var _markdownIt2 = _interopRequireDefault(_markdownIt);
 
-var _toMark = __webpack_require__(23);
+var _toMark = __webpack_require__(24);
 
 var _toMark2 = _interopRequireDefault(_toMark);
 
@@ -840,35 +847,35 @@ var _htmlSanitizer = __webpack_require__(9);
 
 var _htmlSanitizer2 = _interopRequireDefault(_htmlSanitizer);
 
-var _markdownitTaskPlugin = __webpack_require__(24);
+var _markdownitTaskPlugin = __webpack_require__(25);
 
 var _markdownitTaskPlugin2 = _interopRequireDefault(_markdownitTaskPlugin);
 
-var _markdownitCodeBlockPlugin = __webpack_require__(25);
+var _markdownitCodeBlockPlugin = __webpack_require__(26);
 
 var _markdownitCodeBlockPlugin2 = _interopRequireDefault(_markdownitCodeBlockPlugin);
 
-var _markdownitCodeRenderer = __webpack_require__(26);
+var _markdownitCodeRenderer = __webpack_require__(27);
 
 var _markdownitCodeRenderer2 = _interopRequireDefault(_markdownitCodeRenderer);
 
-var _markdownitBlockQuoteRenderer = __webpack_require__(27);
+var _markdownitBlockQuoteRenderer = __webpack_require__(28);
 
 var _markdownitBlockQuoteRenderer2 = _interopRequireDefault(_markdownitBlockQuoteRenderer);
 
-var _markdownitTableRenderer = __webpack_require__(28);
+var _markdownitTableRenderer = __webpack_require__(29);
 
 var _markdownitTableRenderer2 = _interopRequireDefault(_markdownitTableRenderer);
 
-var _markdownitHtmlBlockRenderer = __webpack_require__(29);
+var _markdownitHtmlBlockRenderer = __webpack_require__(30);
 
 var _markdownitHtmlBlockRenderer2 = _interopRequireDefault(_markdownitHtmlBlockRenderer);
 
-var _markdownitBackticksRenderer = __webpack_require__(30);
+var _markdownitBackticksRenderer = __webpack_require__(31);
 
 var _markdownitBackticksRenderer2 = _interopRequireDefault(_markdownitBackticksRenderer);
 
-var _markdownitInlinePlugin = __webpack_require__(31);
+var _markdownitInlinePlugin = __webpack_require__(32);
 
 var _codeBlockManager = __webpack_require__(7);
 
@@ -1132,6 +1139,10 @@ var Convertor = function () {
 
       var markdown = (0, _toMark2.default)(this._appendAttributeForBrIfNeed(html), toMarkOptions);
 
+      // Remove highlight element in code block
+      var wrapper = document.createElement('div');
+      wrapper.innerHTML = markdown;
+      markdown = wrapper.textContent;
       markdown = this.eventManager.emitReduce('convertorAfterHtmlToMarkdownConverted', markdown);
 
       _tuiCodeSnippet2.default.forEach(markdown.split('\n'), function (line, index) {
@@ -1225,11 +1236,11 @@ var _tuiCodeSnippet = __webpack_require__(1);
 
 var _tuiCodeSnippet2 = _interopRequireDefault(_tuiCodeSnippet);
 
-var _command = __webpack_require__(21);
+var _command = __webpack_require__(22);
 
 var _command2 = _interopRequireDefault(_command);
 
-var _util = __webpack_require__(14);
+var _util = __webpack_require__(15);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1420,7 +1431,7 @@ exports.default = CommandManager;
 
 /***/ }),
 
-/***/ 20:
+/***/ 21:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1528,7 +1539,7 @@ exports.default = LazyRunner;
 
 /***/ }),
 
-/***/ 21:
+/***/ 22:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1703,13 +1714,6 @@ exports.default = Command;
 
 /***/ }),
 
-/***/ 22:
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_22__;
-
-/***/ }),
-
 /***/ 23:
 /***/ (function(module, exports) {
 
@@ -1718,6 +1722,13 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_23__;
 /***/ }),
 
 /***/ 24:
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_24__;
+
+/***/ }),
+
+/***/ 25:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1826,7 +1837,7 @@ module.exports = MarkdownitTaskRenderer;
 
 /***/ }),
 
-/***/ 25:
+/***/ 26:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1910,7 +1921,7 @@ module.exports = MarkdownitCodeBlockRenderer;
 
 /***/ }),
 
-/***/ 26:
+/***/ 27:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1980,7 +1991,7 @@ module.exports = function code(state, startLine, endLine /*, silent*/) {
 
 /***/ }),
 
-/***/ 27:
+/***/ 28:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2313,7 +2324,7 @@ module.exports = function blockquote(state, startLine, endLine, silent) {
 
 /***/ }),
 
-/***/ 28:
+/***/ 29:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2528,7 +2539,7 @@ module.exports = function table(state, startLine, endLine, silent) {
 
 /***/ }),
 
-/***/ 29:
+/***/ 30:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2626,7 +2637,7 @@ module.exports = function html_block(state, startLine, endLine, silent) {
 
 /***/ }),
 
-/***/ 30:
+/***/ 31:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2699,7 +2710,7 @@ module.exports = function backtick(state, silent) {
 
 /***/ }),
 
-/***/ 31:
+/***/ 32:
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2748,13 +2759,6 @@ var linkAttribute = exports.linkAttribute = function linkAttribute(markdownit, i
 
 /***/ }),
 
-/***/ 32:
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_32__;
-
-/***/ }),
-
 /***/ 33:
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -2779,7 +2783,7 @@ var _mdPreview = __webpack_require__(12);
 
 var _mdPreview2 = _interopRequireDefault(_mdPreview);
 
-var _eventManager = __webpack_require__(15);
+var _eventManager = __webpack_require__(16);
 
 var _eventManager2 = _interopRequireDefault(_eventManager);
 
@@ -2787,11 +2791,11 @@ var _commandManager = __webpack_require__(2);
 
 var _commandManager2 = _interopRequireDefault(_commandManager);
 
-var _extManager = __webpack_require__(16);
+var _extManager = __webpack_require__(17);
 
 var _extManager2 = _interopRequireDefault(_extManager);
 
-var _convertor = __webpack_require__(17);
+var _convertor = __webpack_require__(18);
 
 var _convertor2 = _interopRequireDefault(_convertor);
 
@@ -4039,7 +4043,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       */
 
 
-var _highlight = __webpack_require__(32);
+var _highlight = __webpack_require__(14);
 
 var _highlight2 = _interopRequireDefault(_highlight);
 

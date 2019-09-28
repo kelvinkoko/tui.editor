@@ -6,14 +6,14 @@
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("jquery"), require("tui-code-snippet"), require("codemirror"), require("markdown-it"), require("to-mark"), require("highlight.js"), require("squire-rte"));
+		module.exports = factory(require("jquery"), require("tui-code-snippet"), require("codemirror"), require("highlight.js"), require("markdown-it"), require("to-mark"), require("squire-rte"));
 	else if(typeof define === 'function' && define.amd)
-		define(["jquery", "tui-code-snippet", "codemirror", "markdown-it", "to-mark", "highlight.js", "squire-rte"], factory);
+		define(["jquery", "tui-code-snippet", "codemirror", "highlight.js", "markdown-it", "to-mark", "squire-rte"], factory);
 	else if(typeof exports === 'object')
-		exports["Editor"] = factory(require("jquery"), require("tui-code-snippet"), require("codemirror"), require("markdown-it"), require("to-mark"), require("highlight.js"), require("squire-rte"));
+		exports["Editor"] = factory(require("jquery"), require("tui-code-snippet"), require("codemirror"), require("highlight.js"), require("markdown-it"), require("to-mark"), require("squire-rte"));
 	else
-		root["tui"] = root["tui"] || {}, root["tui"]["Editor"] = factory(root["$"], (root["tui"] && root["tui"]["util"]), root["CodeMirror"], root["markdownit"], root["toMark"], root["hljs"], root["Squire"]);
-})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_1__, __WEBPACK_EXTERNAL_MODULE_6__, __WEBPACK_EXTERNAL_MODULE_22__, __WEBPACK_EXTERNAL_MODULE_23__, __WEBPACK_EXTERNAL_MODULE_32__, __WEBPACK_EXTERNAL_MODULE_67__) {
+		root["tui"] = root["tui"] || {}, root["tui"]["Editor"] = factory(root["$"], (root["tui"] && root["tui"]["util"]), root["CodeMirror"], root["hljs"], root["markdownit"], root["toMark"], root["Squire"]);
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_1__, __WEBPACK_EXTERNAL_MODULE_6__, __WEBPACK_EXTERNAL_MODULE_14__, __WEBPACK_EXTERNAL_MODULE_23__, __WEBPACK_EXTERNAL_MODULE_24__, __WEBPACK_EXTERNAL_MODULE_67__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -116,11 +116,11 @@ var _tuiCodeSnippet = __webpack_require__(1);
 
 var _tuiCodeSnippet2 = _interopRequireDefault(_tuiCodeSnippet);
 
-var _command = __webpack_require__(21);
+var _command = __webpack_require__(22);
 
 var _command2 = _interopRequireDefault(_command);
 
-var _util = __webpack_require__(14);
+var _util = __webpack_require__(15);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1742,7 +1742,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       */
 
 
-var _highlight = __webpack_require__(32);
+var _highlight = __webpack_require__(14);
 
 var _highlight2 = _interopRequireDefault(_highlight);
 
@@ -2759,7 +2759,7 @@ var _jquery = __webpack_require__(0);
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
-var _lazyRunner = __webpack_require__(20);
+var _lazyRunner = __webpack_require__(21);
 
 var _lazyRunner2 = _interopRequireDefault(_lazyRunner);
 
@@ -2907,6 +2907,12 @@ exports.default = Preview;
 
 /***/ }),
 /* 14 */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_14__;
+
+/***/ }),
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2919,7 +2925,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3184,7 +3190,7 @@ var EventManager = function () {
 exports.default = EventManager;
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3273,7 +3279,7 @@ var ExtManager = function () {
 exports.default = new ExtManager();
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3297,11 +3303,11 @@ var _tuiCodeSnippet = __webpack_require__(1);
 
 var _tuiCodeSnippet2 = _interopRequireDefault(_tuiCodeSnippet);
 
-var _markdownIt = __webpack_require__(22);
+var _markdownIt = __webpack_require__(23);
 
 var _markdownIt2 = _interopRequireDefault(_markdownIt);
 
-var _toMark = __webpack_require__(23);
+var _toMark = __webpack_require__(24);
 
 var _toMark2 = _interopRequireDefault(_toMark);
 
@@ -3309,35 +3315,35 @@ var _htmlSanitizer = __webpack_require__(9);
 
 var _htmlSanitizer2 = _interopRequireDefault(_htmlSanitizer);
 
-var _markdownitTaskPlugin = __webpack_require__(24);
+var _markdownitTaskPlugin = __webpack_require__(25);
 
 var _markdownitTaskPlugin2 = _interopRequireDefault(_markdownitTaskPlugin);
 
-var _markdownitCodeBlockPlugin = __webpack_require__(25);
+var _markdownitCodeBlockPlugin = __webpack_require__(26);
 
 var _markdownitCodeBlockPlugin2 = _interopRequireDefault(_markdownitCodeBlockPlugin);
 
-var _markdownitCodeRenderer = __webpack_require__(26);
+var _markdownitCodeRenderer = __webpack_require__(27);
 
 var _markdownitCodeRenderer2 = _interopRequireDefault(_markdownitCodeRenderer);
 
-var _markdownitBlockQuoteRenderer = __webpack_require__(27);
+var _markdownitBlockQuoteRenderer = __webpack_require__(28);
 
 var _markdownitBlockQuoteRenderer2 = _interopRequireDefault(_markdownitBlockQuoteRenderer);
 
-var _markdownitTableRenderer = __webpack_require__(28);
+var _markdownitTableRenderer = __webpack_require__(29);
 
 var _markdownitTableRenderer2 = _interopRequireDefault(_markdownitTableRenderer);
 
-var _markdownitHtmlBlockRenderer = __webpack_require__(29);
+var _markdownitHtmlBlockRenderer = __webpack_require__(30);
 
 var _markdownitHtmlBlockRenderer2 = _interopRequireDefault(_markdownitHtmlBlockRenderer);
 
-var _markdownitBackticksRenderer = __webpack_require__(30);
+var _markdownitBackticksRenderer = __webpack_require__(31);
 
 var _markdownitBackticksRenderer2 = _interopRequireDefault(_markdownitBackticksRenderer);
 
-var _markdownitInlinePlugin = __webpack_require__(31);
+var _markdownitInlinePlugin = __webpack_require__(32);
 
 var _codeBlockManager = __webpack_require__(7);
 
@@ -3601,6 +3607,10 @@ var Convertor = function () {
 
       var markdown = (0, _toMark2.default)(this._appendAttributeForBrIfNeed(html), toMarkOptions);
 
+      // Remove highlight element in code block
+      var wrapper = document.createElement('div');
+      wrapper.innerHTML = markdown;
+      markdown = wrapper.textContent;
       markdown = this.eventManager.emitReduce('convertorAfterHtmlToMarkdownConverted', markdown);
 
       _tuiCodeSnippet2.default.forEach(markdown.split('\n'), function (line, index) {
@@ -3669,7 +3679,7 @@ var Convertor = function () {
 exports.default = Convertor;
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3876,7 +3886,7 @@ Object.defineProperty(Button, 'className', {
 exports.default = Button;
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4282,7 +4292,7 @@ var KeyMapper = function () {
 exports.default = KeyMapper;
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4389,7 +4399,7 @@ var LazyRunner = function () {
 exports.default = LazyRunner;
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4563,12 +4573,6 @@ Command.TYPE = {
 exports.default = Command;
 
 /***/ }),
-/* 22 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_22__;
-
-/***/ }),
 /* 23 */
 /***/ (function(module, exports) {
 
@@ -4576,6 +4580,12 @@ module.exports = __WEBPACK_EXTERNAL_MODULE_23__;
 
 /***/ }),
 /* 24 */
+/***/ (function(module, exports) {
+
+module.exports = __WEBPACK_EXTERNAL_MODULE_24__;
+
+/***/ }),
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4683,7 +4693,7 @@ function isTaskListItemToken(tokens, index) {
 module.exports = MarkdownitTaskRenderer;
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4766,7 +4776,7 @@ function escape(html, encode) {
 module.exports = MarkdownitCodeBlockRenderer;
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4835,7 +4845,7 @@ module.exports = function code(state, startLine, endLine /*, silent*/) {
 /* eslint-enable */
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5167,7 +5177,7 @@ module.exports = function blockquote(state, startLine, endLine, silent) {
 };
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5381,7 +5391,7 @@ module.exports = function table(state, startLine, endLine, silent) {
 };
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5478,7 +5488,7 @@ module.exports = function html_block(state, startLine, endLine, silent) {
 /* eslint-enable */
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5550,7 +5560,7 @@ module.exports = function backtick(state, silent) {
 };
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5598,12 +5608,6 @@ var linkAttribute = exports.linkAttribute = function linkAttribute(markdownit, i
 };
 
 /***/ }),
-/* 32 */
-/***/ (function(module, exports) {
-
-module.exports = __WEBPACK_EXTERNAL_MODULE_32__;
-
-/***/ }),
 /* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -5628,7 +5632,7 @@ var _mdPreview = __webpack_require__(12);
 
 var _mdPreview2 = _interopRequireDefault(_mdPreview);
 
-var _eventManager = __webpack_require__(15);
+var _eventManager = __webpack_require__(16);
 
 var _eventManager2 = _interopRequireDefault(_eventManager);
 
@@ -5636,11 +5640,11 @@ var _commandManager = __webpack_require__(2);
 
 var _commandManager2 = _interopRequireDefault(_commandManager);
 
-var _extManager = __webpack_require__(16);
+var _extManager = __webpack_require__(17);
 
 var _extManager2 = _interopRequireDefault(_extManager);
 
-var _convertor = __webpack_require__(17);
+var _convertor = __webpack_require__(18);
 
 var _convertor2 = _interopRequireDefault(_convertor);
 
@@ -8949,6 +8953,10 @@ var _tuiCodeSnippet = __webpack_require__(1);
 
 var _tuiCodeSnippet2 = _interopRequireDefault(_tuiCodeSnippet);
 
+var _highlight = __webpack_require__(14);
+
+var _highlight2 = _interopRequireDefault(_highlight);
+
 var _domUtils = __webpack_require__(4);
 
 var _domUtils2 = _interopRequireDefault(_domUtils);
@@ -9197,7 +9205,13 @@ var WwCodeBlockManager = function () {
 
         var resultText = $pre.text().replace(/\s+$/, '');
         $pre.empty();
-        $pre.html(resultText ? sanitizeHtmlCode(resultText) : brString);
+        var hightlighted = '';
+        if (lang) {
+          hightlighted = _highlight2.default.highlight(lang, sanitizeHtmlCode(resultText)).value;
+        } else {
+          hightlighted = _highlight2.default.highlightAuto(sanitizeHtmlCode(resultText)).value;
+        }
+        $pre.html(resultText ? hightlighted : brString);
 
         if (lang) {
           $pre.attr('data-language', lang);
@@ -9446,7 +9460,7 @@ var _uicontroller = __webpack_require__(8);
 
 var _uicontroller2 = _interopRequireDefault(_uicontroller);
 
-var _button = __webpack_require__(18);
+var _button = __webpack_require__(19);
 
 var _button2 = _interopRequireDefault(_button);
 
@@ -10391,7 +10405,7 @@ var _tuiCodeSnippet = __webpack_require__(1);
 
 var _tuiCodeSnippet2 = _interopRequireDefault(_tuiCodeSnippet);
 
-var _button = __webpack_require__(18);
+var _button = __webpack_require__(19);
 
 var _button2 = _interopRequireDefault(_button);
 
@@ -10411,7 +10425,7 @@ var _layout = __webpack_require__(71);
 
 var _layout2 = _interopRequireDefault(_layout);
 
-var _eventManager = __webpack_require__(15);
+var _eventManager = __webpack_require__(16);
 
 var _eventManager2 = _interopRequireDefault(_eventManager);
 
@@ -10419,7 +10433,7 @@ var _commandManager2 = __webpack_require__(2);
 
 var _commandManager3 = _interopRequireDefault(_commandManager2);
 
-var _extManager = __webpack_require__(16);
+var _extManager = __webpack_require__(17);
 
 var _extManager2 = _interopRequireDefault(_extManager);
 
@@ -10431,7 +10445,7 @@ var _wwCodeBlockManager = __webpack_require__(40);
 
 var _wwCodeBlockManager2 = _interopRequireDefault(_wwCodeBlockManager);
 
-var _convertor = __webpack_require__(17);
+var _convertor = __webpack_require__(18);
 
 var _convertor2 = _interopRequireDefault(_convertor);
 
@@ -11514,6 +11528,11 @@ var ToastUIEditor = function () {
       this.mdEditor.setPlaceholder(placeholder);
       this.wwEditor.setPlaceholder(placeholder);
     }
+  }, {
+    key: 'setOnEditorButtonClickAction',
+    value: function setOnEditorButtonClickAction(action) {
+      this.wwEditor.setOnEditorButtonClickAction(action);
+    }
 
     /**
      * Get instance of TUIEditor
@@ -11659,7 +11678,7 @@ var _codeMirrorExt = __webpack_require__(36);
 
 var _codeMirrorExt2 = _interopRequireDefault(_codeMirrorExt);
 
-var _keyMapper = __webpack_require__(19);
+var _keyMapper = __webpack_require__(20);
 
 var _keyMapper2 = _interopRequireDefault(_keyMapper);
 
@@ -14244,7 +14263,7 @@ var _squireExt = __webpack_require__(66);
 
 var _squireExt2 = _interopRequireDefault(_squireExt);
 
-var _keyMapper = __webpack_require__(19);
+var _keyMapper = __webpack_require__(20);
 
 var _keyMapper2 = _interopRequireDefault(_keyMapper);
 
@@ -14293,6 +14312,16 @@ var WysiwygEditor = function () {
     var _this = this;
 
     _classCallCheck(this, WysiwygEditor);
+
+    Object.defineProperty(this, 'onEditorButtonClick', {
+      enumerable: true,
+      writable: true,
+      value: function value() {
+        if (_this._onEditorButtonClickAction) {
+          _this._onEditorButtonClickAction();
+        }
+      }
+    });
 
     this.componentManager = new _componentManager2.default(this);
     this.eventManager = eventManager;
@@ -14346,8 +14375,14 @@ var WysiwygEditor = function () {
       this.codeBlockGadget = new _codeBlockGadget2.default({
         eventManager: this.eventManager,
         container: this.$editorContainerEl,
-        wysiwygEditor: this
+        wysiwygEditor: this,
+        editorButtonClickAction: this.onEditorButtonClick
       });
+    }
+  }, {
+    key: 'setOnEditorButtonClickAction',
+    value: function setOnEditorButtonClickAction(action) {
+      this._onEditorButtonClickAction = action;
     }
 
     /**
@@ -18981,7 +19016,7 @@ var _domUtils = __webpack_require__(4);
 
 var _domUtils2 = _interopRequireDefault(_domUtils);
 
-var _util = __webpack_require__(14);
+var _util = __webpack_require__(15);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -19654,7 +19689,8 @@ var CodeBlockGadget = function (_BlockOverlay) {
   function CodeBlockGadget(_ref) {
     var eventManager = _ref.eventManager,
         container = _ref.container,
-        wysiwygEditor = _ref.wysiwygEditor;
+        wysiwygEditor = _ref.wysiwygEditor,
+        editorButtonClickAction = _ref.editorButtonClickAction;
 
     _classCallCheck(this, CodeBlockGadget);
 
@@ -19666,6 +19702,7 @@ var CodeBlockGadget = function (_BlockOverlay) {
 
     _this._wysiwygEditor = wysiwygEditor;
     _this._popupCodeBlockLanguages = null;
+    _this._editorButtonClickAction = editorButtonClickAction;
 
     _this._initDOM();
     _this._initDOMEvent();
@@ -19679,8 +19716,8 @@ var CodeBlockGadget = function (_BlockOverlay) {
 
       this.$el.addClass('code-block-header');
       this._$languageLabel = (0, _jquery2.default)('<span>text</span>');
-      this.$el.append(this._$languageLabel);
-      this._$buttonOpenModalEditor = (0, _jquery2.default)('<button type="button">Editor</button>');
+      // this.$el.append(this._$languageLabel);
+      this._$buttonOpenModalEditor = (0, _jquery2.default)('<button type="button">Edit</button>');
       this.$el.append(this._$buttonOpenModalEditor);
       this._eventManager.emit('removeEditor', function () {
         _this2._$buttonOpenModalEditor.off('click');
@@ -19690,11 +19727,7 @@ var CodeBlockGadget = function (_BlockOverlay) {
   }, {
     key: '_initDOMEvent',
     value: function _initDOMEvent() {
-      var _this3 = this;
-
-      this._$buttonOpenModalEditor.on('click', function () {
-        return _this3._openPopupCodeBlockEditor();
-      });
+      this._$buttonOpenModalEditor.on('click', this._editorButtonClickAction);
     }
   }, {
     key: '_openPopupCodeBlockEditor',
@@ -19740,12 +19773,12 @@ var CodeBlockGadget = function (_BlockOverlay) {
   }, {
     key: 'onShow',
     value: function onShow() {
-      var _this4 = this;
+      var _this3 = this;
 
       _get(CodeBlockGadget.prototype.__proto__ || Object.getPrototypeOf(CodeBlockGadget.prototype), 'onShow', this).call(this);
 
       this._onAttachedElementChange = function () {
-        return _this4._updateLanguage();
+        return _this3._updateLanguage();
       };
       (0, _jquery2.default)(this.getAttachedElement()).on(EVENT_LANGUAGE_CHANGED, this._onAttachedElementChange);
 
@@ -22034,7 +22067,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _button = __webpack_require__(18);
+var _button = __webpack_require__(19);
 
 var _button2 = _interopRequireDefault(_button);
 
@@ -25136,7 +25169,7 @@ var _i18n = __webpack_require__(3);
 
 var _i18n2 = _interopRequireDefault(_i18n);
 
-var _keyMapper = __webpack_require__(19);
+var _keyMapper = __webpack_require__(20);
 
 var _keyMapper2 = _interopRequireDefault(_keyMapper);
 
