@@ -242,6 +242,10 @@ class Convertor {
 
     let markdown = toMark(this._appendAttributeForBrIfNeed(html), toMarkOptions);
 
+    // Remove highlight element in code block
+    let wrapper = document.createElement('div');
+    wrapper.innerHTML = markdown;
+    markdown = wrapper.textContent;
     markdown = this.eventManager.emitReduce('convertorAfterHtmlToMarkdownConverted', markdown);
 
     util.forEach(markdown.split('\n'), (line, index) => {

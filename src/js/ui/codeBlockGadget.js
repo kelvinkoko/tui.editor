@@ -23,7 +23,7 @@ class CodeBlockGadget extends BlockOverlay {
    * @param {WysiwygEditor} options.wysiwygEditor - wysiwyg editor instance
    * @memberof CodeBlockGadget
    */
-  constructor({eventManager, container, wysiwygEditor}) {
+  constructor({eventManager, container, wysiwygEditor, editorButtonClickAction}) {
     super({
       eventManager,
       container,
@@ -32,6 +32,7 @@ class CodeBlockGadget extends BlockOverlay {
 
     this._wysiwygEditor = wysiwygEditor;
     this._popupCodeBlockLanguages = null;
+    this._editorButtonClickAction = editorButtonClickAction;
 
     this._initDOM();
     this._initDOMEvent();
@@ -40,8 +41,8 @@ class CodeBlockGadget extends BlockOverlay {
   _initDOM() {
     this.$el.addClass('code-block-header');
     this._$languageLabel = $('<span>text</span>');
-    this.$el.append(this._$languageLabel);
-    this._$buttonOpenModalEditor = $(`<button type="button">Editor</button>`);
+    // this.$el.append(this._$languageLabel);
+    this._$buttonOpenModalEditor = $(`<button type="button">Edit</button>`);
     this.$el.append(this._$buttonOpenModalEditor);
     this._eventManager.emit('removeEditor', () => {
       this._$buttonOpenModalEditor.off('click');
@@ -50,7 +51,7 @@ class CodeBlockGadget extends BlockOverlay {
   }
 
   _initDOMEvent() {
-    this._$buttonOpenModalEditor.on('click', () => this._openPopupCodeBlockEditor());
+    this._$buttonOpenModalEditor.on('click', this._editorButtonClickAction);
   }
 
   _openPopupCodeBlockEditor() {

@@ -92,8 +92,19 @@ class WysiwygEditor {
     this.codeBlockGadget = new CodeBlockGadget({
       eventManager: this.eventManager,
       container: this.$editorContainerEl,
-      wysiwygEditor: this
+      wysiwygEditor: this,
+      editorButtonClickAction: this.onEditorButtonClick
     });
+  }
+
+  onEditorButtonClick = () => {
+    if (this._onEditorButtonClickAction) {
+      this._onEditorButtonClickAction();
+    }
+  }
+
+  setOnEditorButtonClickAction(action) {
+    this._onEditorButtonClickAction = action;
   }
 
   /**
