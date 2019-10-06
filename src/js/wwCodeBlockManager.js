@@ -209,10 +209,11 @@ class WwCodeBlockManager {
       $pre.empty();
       let hightlighted = '';
       if (lang) {
-        hightlighted = hljs.highlight(lang, sanitizeHtmlCode(resultText)).value;
+        hightlighted = hljs.highlight(lang, resultText).value;
       } else {
-        hightlighted = hljs.highlightAuto(sanitizeHtmlCode(resultText)).value;
+        hightlighted = sanitizeHtmlCode(resultText);
       }
+      hightlighted = '<div contenteditable="false">' + hightlighted + '</div>';
       $pre.html(resultText ? hightlighted : brString);
 
       if (lang) {

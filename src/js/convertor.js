@@ -242,9 +242,12 @@ class Convertor {
     // Remove highlight element in code block
     let wrapper = document.createElement('div');
     wrapper.innerHTML = html;
-    let codeSection = wrapper.getElementsByTagName('code')[0];
-    if (codeSection) {
-      codeSection.innerHTML = codeSection.textContent;
+    let codeElements = wrapper.getElementsByTagName('code');
+    if (codeElements) {
+      for (let i = 0; i < codeElements.length; i = i + 1) {
+        let codeElement = codeElements[i];
+        codeElement.innerHTML = codeElement.textContent;
+      }
     }
 
     let markdown = toMark(this._appendAttributeForBrIfNeed(wrapper.innerHTML), toMarkOptions);
