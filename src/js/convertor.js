@@ -243,7 +243,9 @@ class Convertor {
     let wrapper = document.createElement('div');
     wrapper.innerHTML = html;
     let codeSection = wrapper.getElementsByTagName('code')[0];
-    codeSection.innerHTML = codeSection.textContent;
+    if (codeSection) {
+      codeSection.innerHTML = codeSection.textContent;
+    }
 
     let markdown = toMark(this._appendAttributeForBrIfNeed(wrapper.innerHTML), toMarkOptions);
 
