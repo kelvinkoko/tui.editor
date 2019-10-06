@@ -1140,7 +1140,9 @@ var Convertor = function () {
       var wrapper = document.createElement('div');
       wrapper.innerHTML = html;
       var codeSection = wrapper.getElementsByTagName('code')[0];
-      codeSection.innerHTML = codeSection.textContent;
+      if (codeSection) {
+        codeSection.innerHTML = codeSection.textContent;
+      }
 
       var markdown = (0, _toMark2.default)(this._appendAttributeForBrIfNeed(wrapper.innerHTML), toMarkOptions);
 
