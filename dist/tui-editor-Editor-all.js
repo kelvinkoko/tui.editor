@@ -10462,10 +10462,11 @@ var WwCodeBlockManager = function () {
         $pre.empty();
         var hightlighted = '';
         if (lang) {
-          hightlighted = _highlight2.default.highlight(lang, sanitizeHtmlCode(resultText)).value;
+          hightlighted = _highlight2.default.highlight(lang, resultText).value;
         } else {
-          hightlighted = _highlight2.default.highlightAuto(sanitizeHtmlCode(resultText)).value;
+          hightlighted = sanitizeHtmlCode(resultText);
         }
+        hightlighted = '<div contenteditable="false">' + hightlighted + '</div>';
         $pre.html(resultText ? hightlighted : brString);
 
         if (lang) {
@@ -11390,9 +11391,12 @@ var Convertor = function () {
       // Remove highlight element in code block
       var wrapper = document.createElement('div');
       wrapper.innerHTML = html;
-      var codeSection = wrapper.getElementsByTagName('code')[0];
-      if (codeSection) {
-        codeSection.innerHTML = codeSection.textContent;
+      var codeElements = wrapper.getElementsByTagName('code');
+      if (codeElements) {
+        for (var i = 0; i < codeElements.length; i = i + 1) {
+          var codeElement = codeElements[i];
+          codeElement.innerHTML = codeElement.textContent;
+        }
       }
 
       var markdown = (0, _toMark2.default)(this._appendAttributeForBrIfNeed(wrapper.innerHTML), toMarkOptions);

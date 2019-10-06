@@ -8681,9 +8681,12 @@ var Convertor = function () {
       // Remove highlight element in code block
       var wrapper = document.createElement('div');
       wrapper.innerHTML = html;
-      var codeSection = wrapper.getElementsByTagName('code')[0];
-      if (codeSection) {
-        codeSection.innerHTML = codeSection.textContent;
+      var codeElements = wrapper.getElementsByTagName('code');
+      if (codeElements) {
+        for (var i = 0; i < codeElements.length; i = i + 1) {
+          var codeElement = codeElements[i];
+          codeElement.innerHTML = codeElement.textContent;
+        }
       }
 
       var markdown = (0, _toMark2.default)(this._appendAttributeForBrIfNeed(wrapper.innerHTML), toMarkOptions);
