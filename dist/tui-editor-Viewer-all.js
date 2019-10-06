@@ -8678,13 +8678,14 @@ var Convertor = function () {
       var resultArray = [];
 
       html = this.eventManager.emitReduce('convertorBeforeHtmlToMarkdownConverted', html);
-
-      var markdown = (0, _toMark2.default)(this._appendAttributeForBrIfNeed(html), toMarkOptions);
-
       // Remove highlight element in code block
       var wrapper = document.createElement('div');
-      wrapper.innerHTML = markdown;
-      markdown = wrapper.textContent;
+      wrapper.innerHTML = html;
+      var codeSection = wrapper.getElementsByTagName('code')[0];
+      codeSection.innerHTML = codeSection.textContent;
+
+      var markdown = (0, _toMark2.default)(this._appendAttributeForBrIfNeed(wrapper.innerHTML), toMarkOptions);
+
       markdown = this.eventManager.emitReduce('convertorAfterHtmlToMarkdownConverted', markdown);
 
       _tuiCodeSnippet2.default.forEach(markdown.split('\n'), function (line, index) {
