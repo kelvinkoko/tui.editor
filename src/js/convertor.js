@@ -239,13 +239,14 @@ class Convertor {
     const resultArray = [];
 
     html = this.eventManager.emitReduce('convertorBeforeHtmlToMarkdownConverted', html);
-
-    let markdown = toMark(this._appendAttributeForBrIfNeed(html), toMarkOptions);
-
     // Remove highlight element in code block
     let wrapper = document.createElement('div');
-    wrapper.innerHTML = markdown;
-    markdown = wrapper.textContent;
+    wrapper.innerHTML = html;
+    let codeSection = wrapper.getElementsByTagName('code')[0];
+    codeSection.innerHTML = codeSection.textContent;
+
+    let markdown = toMark(this._appendAttributeForBrIfNeed(wrapper.innerHTML), toMarkOptions);
+
     markdown = this.eventManager.emitReduce('convertorAfterHtmlToMarkdownConverted', markdown);
 
     util.forEach(markdown.split('\n'), (line, index) => {
