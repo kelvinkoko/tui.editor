@@ -3611,7 +3611,7 @@ var Convertor = function () {
       if (codeElements) {
         for (var i = 0; i < codeElements.length; i = i + 1) {
           var codeElement = codeElements[i];
-          codeElement.innerHTML = codeElement.textContent;
+          codeElement.innerText = codeElement.textContent;
         }
       }
 
