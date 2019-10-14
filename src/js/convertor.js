@@ -246,7 +246,7 @@ class Convertor {
     if (codeElements) {
       for (let i = 0; i < codeElements.length; i = i + 1) {
         let codeElement = codeElements[i];
-        codeElement.innerHTML = codeElement.textContent;
+        codeElement.innerText = codeElement.textContent;
       }
     }
 
