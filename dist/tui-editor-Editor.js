@@ -9213,9 +9213,14 @@ var WwCodeBlockManager = function () {
         $pre.empty();
         var hightlighted = '';
         if (lang) {
-          hightlighted = _highlight2.default.highlight(lang, resultText).value;
+          try {
+            hightlighted = _highlight2.default.highlight(lang, resultText).value;
+          } catch (error) {
+            // On any error, not use highlight
+            hightlighted = sanitizeHtmlCode(resultText);
+          }
         } else {
-          hightlighted = sanitizeHtmlCode(resultText);
+          hightlighted = _highlight2.default.highlightAuto(resultText).value;
         }
         hightlighted = '<div contenteditable="false">' + hightlighted + '</div>';
         $pre.html(resultText ? hightlighted : brString);
