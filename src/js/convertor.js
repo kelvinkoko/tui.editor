@@ -17,6 +17,7 @@ import htmlBlock from './markdownItPlugins/markdownitHtmlBlockRenderer';
 import codeBackticks from './markdownItPlugins/markdownitBackticksRenderer';
 import {linkAttribute} from './markdownItPlugins/markdownitInlinePlugin';
 import codeBlockManager from './codeBlockManager';
+import footnotes from './markdownItPlugins/markdownitFootnoteRenderer';
 
 const markdownitHighlight = new MarkdownIt({
   html: true,
@@ -48,6 +49,7 @@ markdownitHighlight.block.ruler.at('html_block', htmlBlock, {
 markdownitHighlight.inline.ruler.at('backticks', codeBackticks);
 markdownitHighlight.use(taskList);
 markdownitHighlight.use(codeBlock);
+markdownitHighlight.use(footnotes);
 
 markdownitHighlight.renderer.rules.softbreak = (tokens, idx, options) => {
   if (!options.breaks) {
@@ -78,6 +80,7 @@ markdownit.block.ruler.at('html_block', htmlBlock, {
 markdownit.inline.ruler.at('backticks', codeBackticks);
 markdownit.use(taskList);
 markdownit.use(codeBlock);
+markdownit.use(footnotes);
 
 // This regular expression refere markdownIt.
 // https://github.com/markdown-it/markdown-it/blob/master/lib/common/html_re.js
