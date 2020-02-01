@@ -13,7 +13,7 @@
 		exports["Editor"] = factory(require("jquery"), require("tui-code-snippet"), require("codemirror"), require("highlight.js"), require("markdown-it"), require("to-mark"), require("squire-rte"));
 	else
 		root["tui"] = root["tui"] || {}, root["tui"]["Editor"] = factory(root["$"], (root["tui"] && root["tui"]["util"]), root["CodeMirror"], root["hljs"], root["markdownit"], root["toMark"], root["Squire"]);
-})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_1__, __WEBPACK_EXTERNAL_MODULE_6__, __WEBPACK_EXTERNAL_MODULE_14__, __WEBPACK_EXTERNAL_MODULE_23__, __WEBPACK_EXTERNAL_MODULE_24__, __WEBPACK_EXTERNAL_MODULE_67__) {
+})(typeof self !== 'undefined' ? self : this, function(__WEBPACK_EXTERNAL_MODULE_0__, __WEBPACK_EXTERNAL_MODULE_1__, __WEBPACK_EXTERNAL_MODULE_6__, __WEBPACK_EXTERNAL_MODULE_14__, __WEBPACK_EXTERNAL_MODULE_23__, __WEBPACK_EXTERNAL_MODULE_24__, __WEBPACK_EXTERNAL_MODULE_68__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -76,7 +76,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/ 	__webpack_require__.p = "dist/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 45);
+/******/ 	return __webpack_require__(__webpack_require__.s = 46);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -3349,6 +3349,10 @@ var _codeBlockManager = __webpack_require__(7);
 
 var _codeBlockManager2 = _interopRequireDefault(_codeBlockManager);
 
+var _markdownitFootnoteRenderer = __webpack_require__(33);
+
+var _markdownitFootnoteRenderer2 = _interopRequireDefault(_markdownitFootnoteRenderer);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -3383,6 +3387,7 @@ markdownitHighlight.block.ruler.at('html_block', _markdownitHtmlBlockRenderer2.d
 markdownitHighlight.inline.ruler.at('backticks', _markdownitBackticksRenderer2.default);
 markdownitHighlight.use(_markdownitTaskPlugin2.default);
 markdownitHighlight.use(_markdownitCodeBlockPlugin2.default);
+markdownitHighlight.use(_markdownitFootnoteRenderer2.default);
 
 markdownitHighlight.renderer.rules.softbreak = function (tokens, idx, options) {
   if (!options.breaks) {
@@ -3412,6 +3417,7 @@ markdownit.block.ruler.at('html_block', _markdownitHtmlBlockRenderer2.default, {
 markdownit.inline.ruler.at('backticks', _markdownitBackticksRenderer2.default);
 markdownit.use(_markdownitTaskPlugin2.default);
 markdownit.use(_markdownitCodeBlockPlugin2.default);
+markdownit.use(_markdownitFootnoteRenderer2.default);
 
 // This regular expression refere markdownIt.
 // https://github.com/markdown-it/markdown-it/blob/master/lib/common/html_re.js
@@ -3701,7 +3707,7 @@ var _toolbarItem = __webpack_require__(11);
 
 var _toolbarItem2 = _interopRequireDefault(_toolbarItem);
 
-var _tooltip = __webpack_require__(35);
+var _tooltip = __webpack_require__(36);
 
 var _tooltip2 = _interopRequireDefault(_tooltip);
 
@@ -5618,6 +5624,446 @@ var linkAttribute = exports.linkAttribute = function linkAttribute(markdownit, i
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
+// Copyright (c) 2014-2015 Vitaly Puzrin, Alex Kocharin.
+// Distributed under MIT license: https://github.com/markdown-it/markdown-it-footnote
+/**
+ * @fileoverview Implements markdownitFootnoteRenderer
+ */
+
+/* eslint-disable */
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Renderer partials
+
+function render_footnote_anchor_name(tokens, idx, options, env /*, slf*/) {
+  var n = Number(tokens[idx].meta.id + 1).toString();
+  var prefix = '';
+
+  if (typeof env.docId === 'string') {
+    prefix = '-' + env.docId + '-';
+  }
+
+  return prefix + n;
+}
+
+function render_footnote_caption(tokens, idx /*, options, env, slf*/) {
+  var n = Number(tokens[idx].meta.id + 1).toString();
+
+  if (tokens[idx].meta.subId > 0) {
+    n += ':' + tokens[idx].meta.subId;
+  }
+
+  return '[' + n + ']';
+}
+
+function render_footnote_ref(tokens, idx, options, env, slf) {
+  var id = slf.rules.footnote_anchor_name(tokens, idx, options, env, slf);
+  var caption = slf.rules.footnote_caption(tokens, idx, options, env, slf);
+  var refid = id;
+
+  if (tokens[idx].meta.subId > 0) {
+    refid += ':' + tokens[idx].meta.subId;
+  }
+
+  return '<sup class="footnote-ref"><a href="#fn' + id + '" id="fnref' + refid + '">' + caption + '</a></sup>';
+}
+
+function render_footnote_block_open(tokens, idx, options) {
+  return '<section class="footnotes">\n' + (options.xhtmlOut ? '<hr class="footnotes-sep" />\n' : '<hr class="footnotes-sep">\n') + '<ol class="footnotes-list">\n';
+}
+
+function render_footnote_block_close() {
+  return '</ol>\n</section>\n';
+}
+
+function render_footnote_open(tokens, idx, options, env, slf) {
+  var id = slf.rules.footnote_anchor_name(tokens, idx, options, env, slf);
+
+  if (tokens[idx].meta.subId > 0) {
+    id += ':' + tokens[idx].meta.subId;
+  }
+
+  return '<li id="fn' + id + '" class="footnote-item">';
+}
+
+function render_footnote_close() {
+  return '</li>\n';
+}
+
+function render_footnote_anchor(tokens, idx, options, env, slf) {
+  var id = slf.rules.footnote_anchor_name(tokens, idx, options, env, slf);
+
+  if (tokens[idx].meta.subId > 0) {
+    id += ':' + tokens[idx].meta.subId;
+  }
+
+  /* ↩ with escape code to prevent display as Apple Emoji on iOS */
+  return ' <a href="#fnref' + id + '" class="footnote-backref">\u21A9\uFE0E</a>';
+}
+
+module.exports = function footnote_plugin(md) {
+  var parseLinkLabel = md.helpers.parseLinkLabel,
+      isSpace = md.utils.isSpace;
+
+  md.renderer.rules.footnote_ref = render_footnote_ref;
+  md.renderer.rules.footnote_block_open = render_footnote_block_open;
+  md.renderer.rules.footnote_block_close = render_footnote_block_close;
+  md.renderer.rules.footnote_open = render_footnote_open;
+  md.renderer.rules.footnote_close = render_footnote_close;
+  md.renderer.rules.footnote_anchor = render_footnote_anchor;
+
+  // helpers (only used in other rules, no tokens are attached to those)
+  md.renderer.rules.footnote_caption = render_footnote_caption;
+  md.renderer.rules.footnote_anchor_name = render_footnote_anchor_name;
+
+  // Process footnote block definition
+  function footnote_def(state, startLine, endLine, silent) {
+    var oldBMark,
+        oldTShift,
+        oldSCount,
+        oldParentType,
+        pos,
+        label,
+        token,
+        initial,
+        offset,
+        ch,
+        posAfterColon,
+        start = state.bMarks[startLine] + state.tShift[startLine],
+        max = state.eMarks[startLine];
+
+    // line should be at least 5 chars - "[^x]:"
+    if (start + 4 > max) {
+      return false;
+    }
+
+    if (state.src.charCodeAt(start) !== 0x5B /* [ */) {
+        return false;
+      }
+    if (state.src.charCodeAt(start + 1) !== 0x5E /* ^ */) {
+        return false;
+      }
+
+    for (pos = start + 2; pos < max; pos++) {
+      if (state.src.charCodeAt(pos) === 0x20) {
+        return false;
+      }
+      if (state.src.charCodeAt(pos) === 0x5D /* ] */) {
+          break;
+        }
+    }
+
+    if (pos === start + 2) {
+      return false;
+    } // no empty footnote labels
+    if (pos + 1 >= max || state.src.charCodeAt(++pos) !== 0x3A /* : */) {
+        return false;
+      }
+    if (silent) {
+      return true;
+    }
+    pos++;
+
+    if (!state.env.footnotes) {
+      state.env.footnotes = {};
+    }
+    if (!state.env.footnotes.refs) {
+      state.env.footnotes.refs = {};
+    }
+    label = state.src.slice(start + 2, pos - 2);
+    state.env.footnotes.refs[':' + label] = -1;
+
+    token = new state.Token('footnote_reference_open', '', 1);
+    token.meta = { label: label };
+    token.level = state.level++;
+    state.tokens.push(token);
+
+    oldBMark = state.bMarks[startLine];
+    oldTShift = state.tShift[startLine];
+    oldSCount = state.sCount[startLine];
+    oldParentType = state.parentType;
+
+    posAfterColon = pos;
+    initial = offset = state.sCount[startLine] + pos - (state.bMarks[startLine] + state.tShift[startLine]);
+
+    while (pos < max) {
+      ch = state.src.charCodeAt(pos);
+
+      if (isSpace(ch)) {
+        if (ch === 0x09) {
+          offset += 4 - offset % 4;
+        } else {
+          offset++;
+        }
+      } else {
+        break;
+      }
+
+      pos++;
+    }
+
+    state.tShift[startLine] = pos - posAfterColon;
+    state.sCount[startLine] = offset - initial;
+
+    state.bMarks[startLine] = posAfterColon;
+    state.blkIndent += 4;
+    state.parentType = 'footnote';
+
+    if (state.sCount[startLine] < state.blkIndent) {
+      state.sCount[startLine] += state.blkIndent;
+    }
+
+    state.md.block.tokenize(state, startLine, endLine, true);
+
+    state.parentType = oldParentType;
+    state.blkIndent -= 4;
+    state.tShift[startLine] = oldTShift;
+    state.sCount[startLine] = oldSCount;
+    state.bMarks[startLine] = oldBMark;
+
+    token = new state.Token('footnote_reference_close', '', -1);
+    token.level = --state.level;
+    state.tokens.push(token);
+
+    return true;
+  }
+
+  // Process inline footnotes (^[...])
+  function footnote_inline(state, silent) {
+    var labelStart,
+        labelEnd,
+        footnoteId,
+        token,
+        tokens,
+        max = state.posMax,
+        start = state.pos;
+
+    if (start + 2 >= max) {
+      return false;
+    }
+    if (state.src.charCodeAt(start) !== 0x5E /* ^ */) {
+        return false;
+      }
+    if (state.src.charCodeAt(start + 1) !== 0x5B /* [ */) {
+        return false;
+      }
+
+    labelStart = start + 2;
+    labelEnd = parseLinkLabel(state, start + 1);
+
+    // parser failed to find ']', so it's not a valid note
+    if (labelEnd < 0) {
+      return false;
+    }
+
+    // We found the end of the link, and know for a fact it's a valid link;
+    // so all that's left to do is to call tokenizer.
+    //
+    if (!silent) {
+      if (!state.env.footnotes) {
+        state.env.footnotes = {};
+      }
+      if (!state.env.footnotes.list) {
+        state.env.footnotes.list = [];
+      }
+      footnoteId = state.env.footnotes.list.length;
+
+      state.md.inline.parse(state.src.slice(labelStart, labelEnd), state.md, state.env, tokens = []);
+
+      token = state.push('footnote_ref', '', 0);
+      token.meta = { id: footnoteId };
+
+      state.env.footnotes.list[footnoteId] = { tokens: tokens };
+    }
+
+    state.pos = labelEnd + 1;
+    state.posMax = max;
+    return true;
+  }
+
+  // Process footnote references ([^...])
+  function footnote_ref(state, silent) {
+    var label,
+        pos,
+        footnoteId,
+        footnoteSubId,
+        token,
+        max = state.posMax,
+        start = state.pos;
+
+    // should be at least 4 chars - "[^x]"
+    if (start + 3 > max) {
+      return false;
+    }
+
+    if (!state.env.footnotes || !state.env.footnotes.refs) {
+      return false;
+    }
+    if (state.src.charCodeAt(start) !== 0x5B /* [ */) {
+        return false;
+      }
+    if (state.src.charCodeAt(start + 1) !== 0x5E /* ^ */) {
+        return false;
+      }
+
+    for (pos = start + 2; pos < max; pos++) {
+      if (state.src.charCodeAt(pos) === 0x20) {
+        return false;
+      }
+      if (state.src.charCodeAt(pos) === 0x0A) {
+        return false;
+      }
+      if (state.src.charCodeAt(pos) === 0x5D /* ] */) {
+          break;
+        }
+    }
+
+    if (pos === start + 2) {
+      return false;
+    } // no empty footnote labels
+    if (pos >= max) {
+      return false;
+    }
+    pos++;
+
+    label = state.src.slice(start + 2, pos - 1);
+    if (typeof state.env.footnotes.refs[':' + label] === 'undefined') {
+      return false;
+    }
+
+    if (!silent) {
+      if (!state.env.footnotes.list) {
+        state.env.footnotes.list = [];
+      }
+
+      if (state.env.footnotes.refs[':' + label] < 0) {
+        footnoteId = state.env.footnotes.list.length;
+        state.env.footnotes.list[footnoteId] = { label: label, count: 0 };
+        state.env.footnotes.refs[':' + label] = footnoteId;
+      } else {
+        footnoteId = state.env.footnotes.refs[':' + label];
+      }
+
+      footnoteSubId = state.env.footnotes.list[footnoteId].count;
+      state.env.footnotes.list[footnoteId].count++;
+
+      token = state.push('footnote_ref', '', 0);
+      token.meta = { id: footnoteId, subId: footnoteSubId, label: label };
+    }
+
+    state.pos = pos;
+    state.posMax = max;
+    return true;
+  }
+
+  // Glue footnote tokens to end of token stream
+  function footnote_tail(state) {
+    var i,
+        l,
+        j,
+        t,
+        lastParagraph,
+        list,
+        token,
+        tokens,
+        current,
+        currentLabel,
+        insideRef = false,
+        refTokens = {};
+
+    if (!state.env.footnotes) {
+      return;
+    }
+
+    state.tokens = state.tokens.filter(function (tok) {
+      if (tok.type === 'footnote_reference_open') {
+        insideRef = true;
+        current = [];
+        currentLabel = tok.meta.label;
+        return false;
+      }
+      if (tok.type === 'footnote_reference_close') {
+        insideRef = false;
+        // prepend ':' to avoid conflict with Object.prototype members
+        refTokens[':' + currentLabel] = current;
+        return false;
+      }
+      if (insideRef) {
+        current.push(tok);
+      }
+      return !insideRef;
+    });
+
+    if (!state.env.footnotes.list) {
+      return;
+    }
+    list = state.env.footnotes.list;
+
+    token = new state.Token('footnote_block_open', '', 1);
+    state.tokens.push(token);
+
+    for (i = 0, l = list.length; i < l; i++) {
+      token = new state.Token('footnote_open', '', 1);
+      token.meta = { id: i, label: list[i].label };
+      state.tokens.push(token);
+
+      if (list[i].tokens) {
+        tokens = [];
+
+        token = new state.Token('paragraph_open', 'p', 1);
+        token.block = true;
+        tokens.push(token);
+
+        token = new state.Token('inline', '', 0);
+        token.children = list[i].tokens;
+        token.content = '';
+        tokens.push(token);
+
+        token = new state.Token('paragraph_close', 'p', -1);
+        token.block = true;
+        tokens.push(token);
+      } else if (list[i].label) {
+        tokens = refTokens[':' + list[i].label];
+      }
+
+      state.tokens = state.tokens.concat(tokens);
+      if (state.tokens[state.tokens.length - 1].type === 'paragraph_close') {
+        lastParagraph = state.tokens.pop();
+      } else {
+        lastParagraph = null;
+      }
+
+      t = list[i].count > 0 ? list[i].count : 1;
+      for (j = 0; j < t; j++) {
+        token = new state.Token('footnote_anchor', '', 0);
+        token.meta = { id: i, subId: j, label: list[i].label };
+        state.tokens.push(token);
+      }
+
+      if (lastParagraph) {
+        state.tokens.push(lastParagraph);
+      }
+
+      token = new state.Token('footnote_close', '', -1);
+      state.tokens.push(token);
+    }
+
+    token = new state.Token('footnote_block_close', '', -1);
+    state.tokens.push(token);
+  }
+
+  md.block.ruler.before('reference', 'footnote_def', footnote_def, { alt: ['paragraph', 'reference'] });
+  md.inline.ruler.after('image', 'footnote_inline', footnote_inline);
+  md.inline.ruler.after('footnote_inline', 'footnote_ref', footnote_ref);
+  md.core.ruler.after('inline', 'footnote_tail', footnote_tail);
+};
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
 
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
@@ -5967,7 +6413,7 @@ ToastUIEditorViewer.WwTableSelectionManager = null;
 module.exports = ToastUIEditorViewer;
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6126,7 +6572,7 @@ var changeSyntax = exports.changeSyntax = function changeSyntax(doc, range, symb
 };
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6202,7 +6648,7 @@ var Tooltip = function () {
 exports.default = new Tooltip();
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6226,8 +6672,6 @@ var _codemirror = __webpack_require__(6);
 
 var _codemirror2 = _interopRequireDefault(_codemirror);
 
-__webpack_require__(48);
-
 __webpack_require__(49);
 
 __webpack_require__(50);
@@ -6239,6 +6683,8 @@ __webpack_require__(52);
 __webpack_require__(53);
 
 __webpack_require__(54);
+
+__webpack_require__(55);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -6653,7 +7099,7 @@ var CodeMirrorExt = function () {
 exports.default = CodeMirrorExt;
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -6756,7 +7202,7 @@ var ComponentManager = function () {
 exports.default = ComponentManager;
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8429,7 +8875,7 @@ function tableCellGenerator(amount, tagName) {
 exports.default = WwTableManager;
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8935,7 +9381,7 @@ var WwTableSelectionManager = function () {
 exports.default = WwTableSelectionManager;
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9446,7 +9892,7 @@ function sanitizeHtmlCode(code) {
 exports.default = WwCodeBlockManager;
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9480,11 +9926,11 @@ var _toolbarItem = __webpack_require__(11);
 
 var _toolbarItem2 = _interopRequireDefault(_toolbarItem);
 
-var _toolbarDivider = __webpack_require__(42);
+var _toolbarDivider = __webpack_require__(43);
 
 var _toolbarDivider2 = _interopRequireDefault(_toolbarDivider);
 
-var _toolbarItemFactory = __webpack_require__(43);
+var _toolbarItemFactory = __webpack_require__(44);
 
 var _toolbarItemFactory2 = _interopRequireDefault(_toolbarItemFactory);
 
@@ -9888,7 +10334,7 @@ var Toolbar = function (_UIController) {
 exports.default = Toolbar;
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9962,7 +10408,7 @@ Object.defineProperty(ToolbarDivider, 'className', {
 exports.default = ToolbarDivider;
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9981,11 +10427,11 @@ var _toolbarItem = __webpack_require__(11);
 
 var _toolbarItem2 = _interopRequireDefault(_toolbarItem);
 
-var _toolbarButton = __webpack_require__(76);
+var _toolbarButton = __webpack_require__(77);
 
 var _toolbarButton2 = _interopRequireDefault(_toolbarButton);
 
-var _toolbarDivider = __webpack_require__(42);
+var _toolbarDivider = __webpack_require__(43);
 
 var _toolbarDivider2 = _interopRequireDefault(_toolbarDivider);
 
@@ -10179,7 +10625,7 @@ var ToolbarItemFactory = function () {
 exports.default = ToolbarItemFactory;
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10335,7 +10781,7 @@ var Tab = function (_UIController) {
 exports.default = Tab;
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10347,7 +10793,7 @@ var _jquery2 = _interopRequireDefault(_jquery);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var Editor = __webpack_require__(46);
+var Editor = __webpack_require__(47);
 
 // for jquery
 /**
@@ -10388,7 +10834,7 @@ _jquery2.default.fn.tuiEditor = function () {
 module.exports = Editor;
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10421,7 +10867,7 @@ var _button = __webpack_require__(19);
 
 var _button2 = _interopRequireDefault(_button);
 
-var _markdownEditor = __webpack_require__(47);
+var _markdownEditor = __webpack_require__(48);
 
 var _markdownEditor2 = _interopRequireDefault(_markdownEditor);
 
@@ -10429,11 +10875,11 @@ var _mdPreview = __webpack_require__(12);
 
 var _mdPreview2 = _interopRequireDefault(_mdPreview);
 
-var _wysiwygEditor = __webpack_require__(57);
+var _wysiwygEditor = __webpack_require__(58);
 
 var _wysiwygEditor2 = _interopRequireDefault(_wysiwygEditor);
 
-var _layout = __webpack_require__(71);
+var _layout = __webpack_require__(72);
 
 var _layout2 = _interopRequireDefault(_layout);
 
@@ -10453,7 +10899,7 @@ var _importManager = __webpack_require__(10);
 
 var _importManager2 = _interopRequireDefault(_importManager);
 
-var _wwCodeBlockManager = __webpack_require__(40);
+var _wwCodeBlockManager = __webpack_require__(41);
 
 var _wwCodeBlockManager2 = _interopRequireDefault(_wwCodeBlockManager);
 
@@ -10461,7 +10907,7 @@ var _convertor = __webpack_require__(18);
 
 var _convertor2 = _interopRequireDefault(_convertor);
 
-var _viewer = __webpack_require__(33);
+var _viewer = __webpack_require__(34);
 
 var _viewer2 = _interopRequireDefault(_viewer);
 
@@ -10469,7 +10915,7 @@ var _i18n = __webpack_require__(3);
 
 var _i18n2 = _interopRequireDefault(_i18n);
 
-var _defaultUI = __webpack_require__(72);
+var _defaultUI = __webpack_require__(73);
 
 var _defaultUI2 = _interopRequireDefault(_defaultUI);
 
@@ -10477,11 +10923,11 @@ var _domUtils = __webpack_require__(4);
 
 var _domUtils2 = _interopRequireDefault(_domUtils);
 
-var _wwTableManager = __webpack_require__(38);
+var _wwTableManager = __webpack_require__(39);
 
 var _wwTableManager2 = _interopRequireDefault(_wwTableManager);
 
-var _wwTableSelectionManager = __webpack_require__(39);
+var _wwTableSelectionManager = __webpack_require__(40);
 
 var _wwTableSelectionManager2 = _interopRequireDefault(_wwTableSelectionManager);
 
@@ -10489,167 +10935,165 @@ var _codeBlockManager = __webpack_require__(7);
 
 var _codeBlockManager2 = _interopRequireDefault(_codeBlockManager);
 
-var _bold = __webpack_require__(90);
+var _bold = __webpack_require__(91);
 
 var _bold2 = _interopRequireDefault(_bold);
 
-var _italic = __webpack_require__(91);
+var _italic = __webpack_require__(92);
 
 var _italic2 = _interopRequireDefault(_italic);
 
-var _strike = __webpack_require__(92);
+var _strike = __webpack_require__(93);
 
 var _strike2 = _interopRequireDefault(_strike);
 
-var _blockquote = __webpack_require__(93);
+var _blockquote = __webpack_require__(94);
 
 var _blockquote2 = _interopRequireDefault(_blockquote);
 
-var _heading = __webpack_require__(94);
+var _heading = __webpack_require__(95);
 
 var _heading2 = _interopRequireDefault(_heading);
 
-var _paragraph = __webpack_require__(95);
+var _paragraph = __webpack_require__(96);
 
 var _paragraph2 = _interopRequireDefault(_paragraph);
 
-var _hr = __webpack_require__(96);
+var _hr = __webpack_require__(97);
 
 var _hr2 = _interopRequireDefault(_hr);
 
-var _addLink = __webpack_require__(97);
+var _addLink = __webpack_require__(98);
 
 var _addLink2 = _interopRequireDefault(_addLink);
 
-var _addImage = __webpack_require__(98);
+var _addImage = __webpack_require__(99);
 
 var _addImage2 = _interopRequireDefault(_addImage);
 
-var _ul = __webpack_require__(99);
+var _ul = __webpack_require__(100);
 
 var _ul2 = _interopRequireDefault(_ul);
 
-var _ol = __webpack_require__(100);
+var _ol = __webpack_require__(101);
 
 var _ol2 = _interopRequireDefault(_ol);
 
-var _indent = __webpack_require__(101);
+var _indent = __webpack_require__(102);
 
 var _indent2 = _interopRequireDefault(_indent);
 
-var _outdent = __webpack_require__(102);
+var _outdent = __webpack_require__(103);
 
 var _outdent2 = _interopRequireDefault(_outdent);
 
-var _table = __webpack_require__(103);
+var _table = __webpack_require__(104);
 
 var _table2 = _interopRequireDefault(_table);
 
-var _task = __webpack_require__(104);
+var _task = __webpack_require__(105);
 
 var _task2 = _interopRequireDefault(_task);
 
-var _code = __webpack_require__(105);
+var _code = __webpack_require__(106);
 
 var _code2 = _interopRequireDefault(_code);
 
-var _codeBlock = __webpack_require__(106);
+var _codeBlock = __webpack_require__(107);
 
 var _codeBlock2 = _interopRequireDefault(_codeBlock);
 
-var _bold3 = __webpack_require__(107);
+var _bold3 = __webpack_require__(108);
 
 var _bold4 = _interopRequireDefault(_bold3);
 
-var _italic3 = __webpack_require__(108);
+var _italic3 = __webpack_require__(109);
 
 var _italic4 = _interopRequireDefault(_italic3);
 
-var _strike3 = __webpack_require__(109);
+var _strike3 = __webpack_require__(110);
 
 var _strike4 = _interopRequireDefault(_strike3);
 
-var _blockquote3 = __webpack_require__(110);
+var _blockquote3 = __webpack_require__(111);
 
 var _blockquote4 = _interopRequireDefault(_blockquote3);
 
-var _addImage3 = __webpack_require__(111);
+var _addImage3 = __webpack_require__(112);
 
 var _addImage4 = _interopRequireDefault(_addImage3);
 
-var _addLink3 = __webpack_require__(112);
+var _addLink3 = __webpack_require__(113);
 
 var _addLink4 = _interopRequireDefault(_addLink3);
 
-var _hr3 = __webpack_require__(113);
+var _hr3 = __webpack_require__(114);
 
 var _hr4 = _interopRequireDefault(_hr3);
 
-var _heading3 = __webpack_require__(114);
+var _heading3 = __webpack_require__(115);
 
 var _heading4 = _interopRequireDefault(_heading3);
 
-var _paragraph3 = __webpack_require__(115);
+var _paragraph3 = __webpack_require__(116);
 
 var _paragraph4 = _interopRequireDefault(_paragraph3);
 
-var _ul3 = __webpack_require__(116);
+var _ul3 = __webpack_require__(117);
 
 var _ul4 = _interopRequireDefault(_ul3);
 
-var _ol3 = __webpack_require__(117);
+var _ol3 = __webpack_require__(118);
 
 var _ol4 = _interopRequireDefault(_ol3);
 
-var _table3 = __webpack_require__(118);
+var _table3 = __webpack_require__(119);
 
 var _table4 = _interopRequireDefault(_table3);
 
-var _tableAddRow = __webpack_require__(119);
+var _tableAddRow = __webpack_require__(120);
 
 var _tableAddRow2 = _interopRequireDefault(_tableAddRow);
 
-var _tableAddCol = __webpack_require__(120);
+var _tableAddCol = __webpack_require__(121);
 
 var _tableAddCol2 = _interopRequireDefault(_tableAddCol);
 
-var _tableRemoveRow = __webpack_require__(121);
+var _tableRemoveRow = __webpack_require__(122);
 
 var _tableRemoveRow2 = _interopRequireDefault(_tableRemoveRow);
 
-var _tableRemoveCol = __webpack_require__(122);
+var _tableRemoveCol = __webpack_require__(123);
 
 var _tableRemoveCol2 = _interopRequireDefault(_tableRemoveCol);
 
-var _tableAlignCol = __webpack_require__(123);
+var _tableAlignCol = __webpack_require__(124);
 
 var _tableAlignCol2 = _interopRequireDefault(_tableAlignCol);
 
-var _tableRemove = __webpack_require__(124);
+var _tableRemove = __webpack_require__(125);
 
 var _tableRemove2 = _interopRequireDefault(_tableRemove);
 
-var _indent3 = __webpack_require__(125);
+var _indent3 = __webpack_require__(126);
 
 var _indent4 = _interopRequireDefault(_indent3);
 
-var _outdent3 = __webpack_require__(126);
+var _outdent3 = __webpack_require__(127);
 
 var _outdent4 = _interopRequireDefault(_outdent3);
 
-var _task3 = __webpack_require__(127);
+var _task3 = __webpack_require__(128);
 
 var _task4 = _interopRequireDefault(_task3);
 
-var _code3 = __webpack_require__(128);
+var _code3 = __webpack_require__(129);
 
 var _code4 = _interopRequireDefault(_code3);
 
-var _codeBlock3 = __webpack_require__(129);
+var _codeBlock3 = __webpack_require__(130);
 
 var _codeBlock4 = _interopRequireDefault(_codeBlock3);
-
-__webpack_require__(130);
 
 __webpack_require__(131);
 
@@ -10686,6 +11130,8 @@ __webpack_require__(146);
 __webpack_require__(147);
 
 __webpack_require__(148);
+
+__webpack_require__(149);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -11668,7 +12114,7 @@ ToastUIEditor.markdownit = _convertor2.default.getMarkdownitRenderer();
 module.exports = ToastUIEditor;
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -11686,7 +12132,7 @@ var _tuiCodeSnippet = __webpack_require__(1);
 
 var _tuiCodeSnippet2 = _interopRequireDefault(_tuiCodeSnippet);
 
-var _codeMirrorExt = __webpack_require__(36);
+var _codeMirrorExt = __webpack_require__(37);
 
 var _codeMirrorExt2 = _interopRequireDefault(_codeMirrorExt);
 
@@ -11694,15 +12140,15 @@ var _keyMapper = __webpack_require__(20);
 
 var _keyMapper2 = _interopRequireDefault(_keyMapper);
 
-var _mdListManager = __webpack_require__(55);
+var _mdListManager = __webpack_require__(56);
 
 var _mdListManager2 = _interopRequireDefault(_mdListManager);
 
-var _componentManager = __webpack_require__(37);
+var _componentManager = __webpack_require__(38);
 
 var _componentManager2 = _interopRequireDefault(_componentManager);
 
-var _mdTextObject = __webpack_require__(56);
+var _mdTextObject = __webpack_require__(57);
 
 var _mdTextObject2 = _interopRequireDefault(_mdTextObject);
 
@@ -12007,7 +12453,7 @@ var MarkdownEditor = function (_CodeMirrorExt) {
 exports.default = MarkdownEditor;
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12150,7 +12596,7 @@ function findFirstListItem(lineNumber, cm) {
 }
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -12235,7 +12681,7 @@ _codemirror2.default.overlayMode = function (base, overlay, combine) {
  */
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13135,7 +13581,7 @@ _codemirror2.default.defineMIME("text/markdown", "markdown");
 _codemirror2.default.defineMIME("text/x-markdown", "markdown");
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13273,7 +13719,7 @@ _codemirror2.default.defineMode("gfm", function (config, modeConfig) {
 _codemirror2.default.defineMIME("text/x-gfm", "gfm");
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13401,7 +13847,7 @@ function incrementRemainingMarkdownListNumbers(cm, pos) {
 }
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13554,7 +14000,7 @@ function replaceMultiLine(cm, upper, bottom, lineAdjustment) {
 }
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -13624,7 +14070,7 @@ function isEmpty(cm) {
 }
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14019,7 +14465,7 @@ var MdListManager = function () {
 exports.default = MdListManager;
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14207,7 +14653,7 @@ var mdTextObject = function () {
 exports.default = mdTextObject;
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -14235,43 +14681,43 @@ var _domUtils = __webpack_require__(4);
 
 var _domUtils2 = _interopRequireDefault(_domUtils);
 
-var _wwClipboardManager = __webpack_require__(58);
+var _wwClipboardManager = __webpack_require__(59);
 
 var _wwClipboardManager2 = _interopRequireDefault(_wwClipboardManager);
 
-var _wwListManager = __webpack_require__(61);
+var _wwListManager = __webpack_require__(62);
 
 var _wwListManager2 = _interopRequireDefault(_wwListManager);
 
-var _wwTaskManager = __webpack_require__(62);
+var _wwTaskManager = __webpack_require__(63);
 
 var _wwTaskManager2 = _interopRequireDefault(_wwTaskManager);
 
-var _wwTableManager = __webpack_require__(38);
+var _wwTableManager = __webpack_require__(39);
 
 var _wwTableManager2 = _interopRequireDefault(_wwTableManager);
 
-var _wwTableSelectionManager = __webpack_require__(39);
+var _wwTableSelectionManager = __webpack_require__(40);
 
 var _wwTableSelectionManager2 = _interopRequireDefault(_wwTableSelectionManager);
 
-var _wwHrManager = __webpack_require__(63);
+var _wwHrManager = __webpack_require__(64);
 
 var _wwHrManager2 = _interopRequireDefault(_wwHrManager);
 
-var _wwPManager = __webpack_require__(64);
+var _wwPManager = __webpack_require__(65);
 
 var _wwPManager2 = _interopRequireDefault(_wwPManager);
 
-var _wwHeadingManager = __webpack_require__(65);
+var _wwHeadingManager = __webpack_require__(66);
 
 var _wwHeadingManager2 = _interopRequireDefault(_wwHeadingManager);
 
-var _wwCodeBlockManager = __webpack_require__(40);
+var _wwCodeBlockManager = __webpack_require__(41);
 
 var _wwCodeBlockManager2 = _interopRequireDefault(_wwCodeBlockManager);
 
-var _squireExt = __webpack_require__(66);
+var _squireExt = __webpack_require__(67);
 
 var _squireExt2 = _interopRequireDefault(_squireExt);
 
@@ -14279,15 +14725,15 @@ var _keyMapper = __webpack_require__(20);
 
 var _keyMapper2 = _interopRequireDefault(_keyMapper);
 
-var _wwTextObject = __webpack_require__(68);
+var _wwTextObject = __webpack_require__(69);
 
 var _wwTextObject2 = _interopRequireDefault(_wwTextObject);
 
-var _componentManager = __webpack_require__(37);
+var _componentManager = __webpack_require__(38);
 
 var _componentManager2 = _interopRequireDefault(_componentManager);
 
-var _codeBlockGadget = __webpack_require__(69);
+var _codeBlockGadget = __webpack_require__(70);
 
 var _codeBlockGadget2 = _interopRequireDefault(_codeBlockGadget);
 
@@ -15787,7 +16233,7 @@ var WysiwygEditor = function () {
 exports.default = WysiwygEditor;
 
 /***/ }),
-/* 58 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -15815,11 +16261,11 @@ var _domUtils = __webpack_require__(4);
 
 var _domUtils2 = _interopRequireDefault(_domUtils);
 
-var _wwPasteContentHelper = __webpack_require__(59);
+var _wwPasteContentHelper = __webpack_require__(60);
 
 var _wwPasteContentHelper2 = _interopRequireDefault(_wwPasteContentHelper);
 
-var _wwTablePasteHelper = __webpack_require__(60);
+var _wwTablePasteHelper = __webpack_require__(61);
 
 var _wwTablePasteHelper2 = _interopRequireDefault(_wwTablePasteHelper);
 
@@ -16286,7 +16732,7 @@ var WwClipboardManager = function () {
 exports.default = WwClipboardManager;
 
 /***/ }),
-/* 59 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -16814,7 +17260,7 @@ var WwPasteContentHelper = function () {
 exports.default = WwPasteContentHelper;
 
 /***/ }),
-/* 60 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -17363,7 +17809,7 @@ var WwTablePasteHelper = function () {
 exports.default = WwTablePasteHelper;
 
 /***/ }),
-/* 61 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18205,7 +18651,7 @@ var WwListManager = function () {
 exports.default = WwListManager;
 
 /***/ }),
-/* 62 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18433,7 +18879,7 @@ var WwTaskManager = function () {
 exports.default = WwTaskManager;
 
 /***/ }),
-/* 63 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18566,7 +19012,7 @@ var WwHrManager = function () {
 exports.default = WwHrManager;
 
 /***/ }),
-/* 64 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -18732,7 +19178,7 @@ var WwPManager = function () {
 exports.default = WwPManager;
 
 /***/ }),
-/* 65 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19000,7 +19446,7 @@ var WwHeadingManager = function () {
 exports.default = WwHeadingManager;
 
 /***/ }),
-/* 66 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19020,7 +19466,7 @@ var _tuiCodeSnippet = __webpack_require__(1);
 
 var _tuiCodeSnippet2 = _interopRequireDefault(_tuiCodeSnippet);
 
-var _squireRte = __webpack_require__(67);
+var _squireRte = __webpack_require__(68);
 
 var _squireRte2 = _interopRequireDefault(_squireRte);
 
@@ -19422,13 +19868,13 @@ var SquireExt = function (_Squire) {
 exports.default = SquireExt;
 
 /***/ }),
-/* 67 */
+/* 68 */
 /***/ (function(module, exports) {
 
-module.exports = __WEBPACK_EXTERNAL_MODULE_67__;
+module.exports = __WEBPACK_EXTERNAL_MODULE_68__;
 
 /***/ }),
-/* 68 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19644,7 +20090,7 @@ var WwTextObject = function () {
 exports.default = WwTextObject;
 
 /***/ }),
-/* 69 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -19662,7 +20108,7 @@ var _jquery = __webpack_require__(0);
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
-var _blockOverlay = __webpack_require__(70);
+var _blockOverlay = __webpack_require__(71);
 
 var _blockOverlay2 = _interopRequireDefault(_blockOverlay);
 
@@ -19819,7 +20265,7 @@ var CodeBlockGadget = function (_BlockOverlay) {
 exports.default = CodeBlockGadget;
 
 /***/ }),
-/* 70 */
+/* 71 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20025,7 +20471,7 @@ var BlockOverlay = function () {
 exports.default = BlockOverlay;
 
 /***/ }),
-/* 71 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20299,7 +20745,7 @@ var Layout = function () {
 exports.default = Layout;
 
 /***/ }),
-/* 72 */
+/* 73 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20319,11 +20765,11 @@ var _jquery = __webpack_require__(0);
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
-var _defaultToolbar = __webpack_require__(73);
+var _defaultToolbar = __webpack_require__(74);
 
 var _defaultToolbar2 = _interopRequireDefault(_defaultToolbar);
 
-var _tab = __webpack_require__(44);
+var _tab = __webpack_require__(45);
 
 var _tab2 = _interopRequireDefault(_tab);
 
@@ -20331,35 +20777,35 @@ var _layerpopup = __webpack_require__(5);
 
 var _layerpopup2 = _interopRequireDefault(_layerpopup);
 
-var _modeSwitch = __webpack_require__(78);
+var _modeSwitch = __webpack_require__(79);
 
 var _modeSwitch2 = _interopRequireDefault(_modeSwitch);
 
-var _popupAddLink = __webpack_require__(79);
+var _popupAddLink = __webpack_require__(80);
 
 var _popupAddLink2 = _interopRequireDefault(_popupAddLink);
 
-var _popupAddImage = __webpack_require__(80);
+var _popupAddImage = __webpack_require__(81);
 
 var _popupAddImage2 = _interopRequireDefault(_popupAddImage);
 
-var _popupTableUtils = __webpack_require__(81);
+var _popupTableUtils = __webpack_require__(82);
 
 var _popupTableUtils2 = _interopRequireDefault(_popupTableUtils);
 
-var _popupAddTable = __webpack_require__(82);
+var _popupAddTable = __webpack_require__(83);
 
 var _popupAddTable2 = _interopRequireDefault(_popupAddTable);
 
-var _popupAddHeading = __webpack_require__(83);
+var _popupAddHeading = __webpack_require__(84);
 
 var _popupAddHeading2 = _interopRequireDefault(_popupAddHeading);
 
-var _popupCodeBlockLanguages = __webpack_require__(84);
+var _popupCodeBlockLanguages = __webpack_require__(85);
 
 var _popupCodeBlockLanguages2 = _interopRequireDefault(_popupCodeBlockLanguages);
 
-var _popupCodeBlockEditor = __webpack_require__(85);
+var _popupCodeBlockEditor = __webpack_require__(86);
 
 var _popupCodeBlockEditor2 = _interopRequireDefault(_popupCodeBlockEditor);
 
@@ -20367,7 +20813,7 @@ var _i18n = __webpack_require__(3);
 
 var _i18n2 = _interopRequireDefault(_i18n);
 
-var _tooltip = __webpack_require__(35);
+var _tooltip = __webpack_require__(36);
 
 var _tooltip2 = _interopRequireDefault(_tooltip);
 
@@ -20812,7 +21258,7 @@ var DefaultUI = function () {
 exports.default = DefaultUI;
 
 /***/ }),
-/* 73 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -20826,7 +21272,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-var _resizeObserverPolyfill = __webpack_require__(74);
+var _resizeObserverPolyfill = __webpack_require__(75);
 
 var _resizeObserverPolyfill2 = _interopRequireDefault(_resizeObserverPolyfill);
 
@@ -20834,15 +21280,15 @@ var _i18n = __webpack_require__(3);
 
 var _i18n2 = _interopRequireDefault(_i18n);
 
-var _toolbar = __webpack_require__(41);
+var _toolbar = __webpack_require__(42);
 
 var _toolbar2 = _interopRequireDefault(_toolbar);
 
-var _popupDropdownToolbar = __webpack_require__(77);
+var _popupDropdownToolbar = __webpack_require__(78);
 
 var _popupDropdownToolbar2 = _interopRequireDefault(_popupDropdownToolbar);
 
-var _toolbarItemFactory = __webpack_require__(43);
+var _toolbarItemFactory = __webpack_require__(44);
 
 var _toolbarItemFactory2 = _interopRequireDefault(_toolbarItemFactory);
 
@@ -21009,7 +21455,7 @@ var DefaultToolbar = function (_Toolbar) {
 exports.default = DefaultToolbar;
 
 /***/ }),
-/* 74 */
+/* 75 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -22039,10 +22485,10 @@ var index = (function () {
 
 /* harmony default export */ __webpack_exports__["default"] = (index);
 
-/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(75)))
+/* WEBPACK VAR INJECTION */}.call(__webpack_exports__, __webpack_require__(76)))
 
 /***/ }),
-/* 75 */
+/* 76 */
 /***/ (function(module, exports) {
 
 var g;
@@ -22069,7 +22515,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 76 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22114,7 +22560,7 @@ var ToolbarButton = function (_Button) {
 exports.default = ToolbarButton;
 
 /***/ }),
-/* 77 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22136,7 +22582,7 @@ var _layerpopup = __webpack_require__(5);
 
 var _layerpopup2 = _interopRequireDefault(_layerpopup);
 
-var _toolbar = __webpack_require__(41);
+var _toolbar = __webpack_require__(42);
 
 var _toolbar2 = _interopRequireDefault(_toolbar);
 
@@ -22381,7 +22827,7 @@ Object.defineProperty(PopupDropdownToolbar, 'OPEN_EVENT', {
 exports.default = PopupDropdownToolbar;
 
 /***/ }),
-/* 78 */
+/* 79 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22584,7 +23030,7 @@ Object.defineProperty(ModeSwitch, 'TYPE', {
 exports.default = ModeSwitch;
 
 /***/ }),
-/* 79 */
+/* 80 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22815,7 +23261,7 @@ var PopupAddLink = function (_LayerPopup) {
 exports.default = PopupAddLink;
 
 /***/ }),
-/* 80 */
+/* 81 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -22837,7 +23283,7 @@ var _layerpopup = __webpack_require__(5);
 
 var _layerpopup2 = _interopRequireDefault(_layerpopup);
 
-var _tab = __webpack_require__(44);
+var _tab = __webpack_require__(45);
 
 var _tab2 = _interopRequireDefault(_tab);
 
@@ -23052,7 +23498,7 @@ var PopupAddImage = function (_LayerPopup) {
 exports.default = PopupAddImage;
 
 /***/ }),
-/* 81 */
+/* 82 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23223,7 +23669,7 @@ var PopupTableUtils = function (_LayerPopup) {
 exports.default = PopupTableUtils;
 
 /***/ }),
-/* 82 */
+/* 83 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23720,7 +24166,7 @@ PopupAddTable.MIN_COL_SELECTION_INDEX = MIN_COL_SELECTION_INDEX;
 exports.default = PopupAddTable;
 
 /***/ }),
-/* 83 */
+/* 84 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -23866,7 +24312,7 @@ var PopupAddHeading = function (_LayerPopup) {
 exports.default = PopupAddHeading;
 
 /***/ }),
-/* 84 */
+/* 85 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24164,7 +24610,7 @@ var PopupCodeBlockLanguages = function (_LayerPopup) {
 exports.default = PopupCodeBlockLanguages;
 
 /***/ }),
-/* 85 */
+/* 86 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24190,19 +24636,19 @@ var _layerpopup = __webpack_require__(5);
 
 var _layerpopup2 = _interopRequireDefault(_layerpopup);
 
-var _scrollSyncSplit = __webpack_require__(86);
+var _scrollSyncSplit = __webpack_require__(87);
 
 var _scrollSyncSplit2 = _interopRequireDefault(_scrollSyncSplit);
 
-var _codeBlockEditor = __webpack_require__(87);
+var _codeBlockEditor = __webpack_require__(88);
 
 var _codeBlockEditor2 = _interopRequireDefault(_codeBlockEditor);
 
-var _codeBlockPreview = __webpack_require__(88);
+var _codeBlockPreview = __webpack_require__(89);
 
 var _codeBlockPreview2 = _interopRequireDefault(_codeBlockPreview);
 
-var _codeBlockLanguagesCombo = __webpack_require__(89);
+var _codeBlockLanguagesCombo = __webpack_require__(90);
 
 var _codeBlockLanguagesCombo2 = _interopRequireDefault(_codeBlockLanguagesCombo);
 
@@ -24537,7 +24983,7 @@ var PopupCodeBlockEditor = function (_LayerPopup) {
 exports.default = PopupCodeBlockEditor;
 
 /***/ }),
-/* 86 */
+/* 87 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24851,7 +25297,7 @@ var ScrollSyncSplit = function () {
 exports.default = ScrollSyncSplit;
 
 /***/ }),
-/* 87 */
+/* 88 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -24867,7 +25313,7 @@ var _jquery = __webpack_require__(0);
 
 var _jquery2 = _interopRequireDefault(_jquery);
 
-var _codeMirrorExt = __webpack_require__(36);
+var _codeMirrorExt = __webpack_require__(37);
 
 var _codeMirrorExt2 = _interopRequireDefault(_codeMirrorExt);
 
@@ -25054,7 +25500,7 @@ var CodeBlockEditor = function (_CodeMirrorExt) {
 exports.default = CodeBlockEditor;
 
 /***/ }),
-/* 88 */
+/* 89 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25157,7 +25603,7 @@ var CodeBlockPreview = function (_Preview) {
 exports.default = CodeBlockPreview;
 
 /***/ }),
-/* 89 */
+/* 90 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25397,7 +25843,7 @@ var CodeBlockLanguagesCombo = function () {
 exports.default = CodeBlockLanguagesCombo;
 
 /***/ }),
-/* 90 */
+/* 91 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25411,7 +25857,7 @@ var _commandManager = __webpack_require__(2);
 
 var _commandManager2 = _interopRequireDefault(_commandManager);
 
-var _emphasisCommon = __webpack_require__(34);
+var _emphasisCommon = __webpack_require__(35);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -25451,7 +25897,7 @@ var Bold = _commandManager2.default.command('markdown', /** @lends Bold */{
 exports.default = Bold;
 
 /***/ }),
-/* 91 */
+/* 92 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25465,7 +25911,7 @@ var _commandManager = __webpack_require__(2);
 
 var _commandManager2 = _interopRequireDefault(_commandManager);
 
-var _emphasisCommon = __webpack_require__(34);
+var _emphasisCommon = __webpack_require__(35);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -25600,7 +26046,7 @@ var Italic = _commandManager2.default.command('markdown', /** @lends Italic */{
 exports.default = Italic;
 
 /***/ }),
-/* 92 */
+/* 93 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25614,7 +26060,7 @@ var _commandManager = __webpack_require__(2);
 
 var _commandManager2 = _interopRequireDefault(_commandManager);
 
-var _emphasisCommon = __webpack_require__(34);
+var _emphasisCommon = __webpack_require__(35);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -25654,7 +26100,7 @@ var Strike = _commandManager2.default.command('markdown', /** @lends Strike */{
 exports.default = Strike;
 
 /***/ }),
-/* 93 */
+/* 94 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25794,7 +26240,7 @@ var Blockquote = _commandManager2.default.command('markdown', /** @lends Blockqu
 exports.default = Blockquote;
 
 /***/ }),
-/* 94 */
+/* 95 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25895,7 +26341,7 @@ function getHeadingMarkdown(text, size) {
 exports.default = Heading;
 
 /***/ }),
-/* 95 */
+/* 96 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -25976,7 +26422,7 @@ function getParagraphMarkdown(lineText) {
 exports.default = Paragraph;
 
 /***/ }),
-/* 96 */
+/* 97 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26047,7 +26493,7 @@ var HR = _commandManager2.default.command('markdown', /** @lends HR */{
 exports.default = HR;
 
 /***/ }),
-/* 97 */
+/* 98 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26124,7 +26570,7 @@ var AddLink = _commandManager2.default.command('markdown', /** @lends AddLink */
 exports.default = AddLink;
 
 /***/ }),
-/* 98 */
+/* 99 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26200,7 +26646,7 @@ var AddImage = _commandManager2.default.command('markdown', /** @lends AddImage 
 exports.default = AddImage;
 
 /***/ }),
-/* 99 */
+/* 100 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26243,7 +26689,7 @@ var UL = _commandManager2.default.command('markdown', /** @lends UL */{
 exports.default = UL;
 
 /***/ }),
-/* 100 */
+/* 101 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26287,7 +26733,7 @@ var OL = _commandManager2.default.command('markdown', /** @lends OL */{
 exports.default = OL;
 
 /***/ }),
-/* 101 */
+/* 102 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26328,7 +26774,7 @@ var Indent = _commandManager2.default.command('markdown', /** @lends Indent */{
 exports.default = Indent;
 
 /***/ }),
-/* 102 */
+/* 103 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26369,7 +26815,7 @@ var Outdent = _commandManager2.default.command('markdown', /** @lends Outdent */
 exports.default = Outdent;
 
 /***/ }),
-/* 103 */
+/* 104 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26490,7 +26936,7 @@ function makeBody(col, row, data) {
 exports.default = Table;
 
 /***/ }),
-/* 104 */
+/* 105 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26532,7 +26978,7 @@ var Task = _commandManager2.default.command('markdown', /** @lends Task */{
 exports.default = Task;
 
 /***/ }),
-/* 105 */
+/* 106 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26651,7 +27097,7 @@ var Code = _commandManager2.default.command('markdown', /** @lends Code */{
 exports.default = Code;
 
 /***/ }),
-/* 106 */
+/* 107 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26709,7 +27155,7 @@ var CodeBlock = _commandManager2.default.command('markdown', /** @lends CodeBloc
 exports.default = CodeBlock;
 
 /***/ }),
-/* 107 */
+/* 108 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26784,7 +27230,7 @@ function styleBold(sq) {
 exports.default = Bold;
 
 /***/ }),
-/* 108 */
+/* 109 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26860,7 +27306,7 @@ function styleItalic(sq) {
 exports.default = Italic;
 
 /***/ }),
-/* 109 */
+/* 110 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26936,7 +27382,7 @@ function styleStrike(sq) {
 exports.default = Strike;
 
 /***/ }),
-/* 110 */
+/* 111 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -26987,7 +27433,7 @@ var Blockquote = _commandManager2.default.command('wysiwyg', /** @lends Blockquo
 exports.default = Blockquote;
 
 /***/ }),
-/* 111 */
+/* 112 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27048,7 +27494,7 @@ var AddImage = _commandManager2.default.command('wysiwyg', /** @lends AddImage *
 exports.default = AddImage;
 
 /***/ }),
-/* 112 */
+/* 113 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27129,7 +27575,7 @@ var AddLink = _commandManager2.default.command('wysiwyg', /** @lends AddLink */{
 exports.default = AddLink;
 
 /***/ }),
-/* 113 */
+/* 114 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27217,7 +27663,7 @@ var HR = _commandManager2.default.command('wysiwyg', /** @lends HR */{
 exports.default = HR;
 
 /***/ }),
-/* 114 */
+/* 115 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27287,7 +27733,7 @@ var Heading = _commandManager2.default.command('wysiwyg', /** @lends Heading */{
 exports.default = Heading;
 
 /***/ }),
-/* 115 */
+/* 116 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27354,7 +27800,7 @@ var Paragraph = _commandManager2.default.command('wysiwyg', /** @lends Paragraph
 exports.default = Paragraph;
 
 /***/ }),
-/* 116 */
+/* 117 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27457,7 +27903,7 @@ var UL = _commandManager2.default.command('wysiwyg', /** @lends UL */{
 exports.default = UL;
 
 /***/ }),
-/* 117 */
+/* 118 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27561,7 +28007,7 @@ var OL = _commandManager2.default.command('wysiwyg', /** @lends OL */{
 exports.default = OL;
 
 /***/ }),
-/* 118 */
+/* 119 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27701,7 +28147,7 @@ function makeBody(col, row, data) {
 exports.default = Table;
 
 /***/ }),
-/* 119 */
+/* 120 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27826,7 +28272,7 @@ function focusToFirstTd(sq, $tr) {
 exports.default = TableAddRow;
 
 /***/ }),
-/* 120 */
+/* 121 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -27975,7 +28421,7 @@ function focusToNextCell(sq, $cell) {
 exports.default = TableAddCol;
 
 /***/ }),
-/* 121 */
+/* 122 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28104,7 +28550,7 @@ function getTrs(range, selectionMgr, $table) {
 exports.default = TableRemoveRow;
 
 /***/ }),
-/* 122 */
+/* 123 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28250,7 +28696,7 @@ function focusToCell(sq, $cell, tableMgr) {
 exports.default = TableRemoveCol;
 
 /***/ }),
-/* 123 */
+/* 124 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28402,7 +28848,7 @@ function getRangeInformation(range, selectionMgr) {
 exports.default = TableAlignCol;
 
 /***/ }),
-/* 124 */
+/* 125 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28457,7 +28903,7 @@ var TableRemove = _commandManager2.default.command('wysiwyg', /** @lends RemoveT
 exports.default = TableRemove;
 
 /***/ }),
-/* 125 */
+/* 126 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28533,7 +28979,7 @@ var Indent = _commandManager2.default.command('wysiwyg', /** @lends Indent */{
 exports.default = Indent;
 
 /***/ }),
-/* 126 */
+/* 127 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28613,7 +29059,7 @@ function getCurrent$Li(wwe) {
 exports.default = Outdent;
 
 /***/ }),
-/* 127 */
+/* 128 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28724,7 +29170,7 @@ var Task = _commandManager2.default.command('wysiwyg', /** @lends Task */{
 exports.default = Task;
 
 /***/ }),
-/* 128 */
+/* 129 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28829,7 +29275,7 @@ function styleCode(editor, sq) {
 exports.default = Code;
 
 /***/ }),
-/* 129 */
+/* 130 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28935,7 +29381,7 @@ function getCodeBlockBody(range, wwe) {
 exports.default = CodeBlock;
 
 /***/ }),
-/* 130 */
+/* 131 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -28998,7 +29444,7 @@ _i18n2.default.setLanguage(['en', 'en_US'], {
     */
 
 /***/ }),
-/* 131 */
+/* 132 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29061,7 +29507,7 @@ _i18n2.default.setLanguage(['ko', 'ko_KR'], {
     */
 
 /***/ }),
-/* 132 */
+/* 133 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29124,7 +29570,7 @@ _i18n2.default.setLanguage(['zh', 'zh_CN'], {
     */
 
 /***/ }),
-/* 133 */
+/* 134 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29187,7 +29633,7 @@ _i18n2.default.setLanguage(['ja', 'ja_JP'], {
     */
 
 /***/ }),
-/* 134 */
+/* 135 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29250,7 +29696,7 @@ _i18n2.default.setLanguage(['nl', 'nl_NL'], {
     */
 
 /***/ }),
-/* 135 */
+/* 136 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29313,7 +29759,7 @@ _i18n2.default.setLanguage(['es', 'es_ES'], {
     */
 
 /***/ }),
-/* 136 */
+/* 137 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29376,7 +29822,7 @@ _i18n2.default.setLanguage(['de', 'de_DE'], {
     */
 
 /***/ }),
-/* 137 */
+/* 138 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29439,7 +29885,7 @@ _i18n2.default.setLanguage(['ru', 'ru_RU'], {
     */
 
 /***/ }),
-/* 138 */
+/* 139 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29502,7 +29948,7 @@ _i18n2.default.setLanguage(['fr', 'fr_FR'], {
     */
 
 /***/ }),
-/* 139 */
+/* 140 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29565,7 +30011,7 @@ _i18n2.default.setLanguage(['uk', 'uk_UA'], {
     */
 
 /***/ }),
-/* 140 */
+/* 141 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29628,7 +30074,7 @@ _i18n2.default.setLanguage(['tr', 'tr_TR'], {
     */
 
 /***/ }),
-/* 141 */
+/* 142 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29691,7 +30137,7 @@ _i18n2.default.setLanguage(['fi', 'fi_FI'], {
     */
 
 /***/ }),
-/* 142 */
+/* 143 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29754,7 +30200,7 @@ _i18n2.default.setLanguage(['cs', 'cs_CZ'], {
     */
 
 /***/ }),
-/* 143 */
+/* 144 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29817,7 +30263,7 @@ _i18n2.default.setLanguage(['ar', 'ar_AR'], {
     */
 
 /***/ }),
-/* 144 */
+/* 145 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29880,7 +30326,7 @@ _i18n2.default.setLanguage(['pl', 'pl_PL'], {
     */
 
 /***/ }),
-/* 145 */
+/* 146 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -29943,7 +30389,7 @@ _i18n2.default.setLanguage(['zhtw', 'zh_TW'], {
     */
 
 /***/ }),
-/* 146 */
+/* 147 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30006,7 +30452,7 @@ _i18n2.default.setLanguage(['gl', 'gl_ES'], {
     */
 
 /***/ }),
-/* 147 */
+/* 148 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -30069,7 +30515,7 @@ _i18n2.default.setLanguage(['sv', 'sv_SE'], {
      */
 
 /***/ }),
-/* 148 */
+/* 149 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
