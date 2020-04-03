@@ -77,6 +77,12 @@ class WysiwygEditor {
       blockTag: 'DIV',
       leafNodeNames: {
         'HR': false
+      },
+      tagAttributes: {
+        'a': {
+          contenteditable: 'false',
+          target: '_blank'
+        }
       }
     });
     this.editor.blockCommandShortcuts();
