@@ -218,7 +218,7 @@ class WwCodeBlockManager {
       } else {
         hightlighted = hljs.highlightAuto(resultText).value;
       }
-      hightlighted = '<div contenteditable="false">' + hightlighted + '</div>';
+      hightlighted = '<div contenteditable="false" style="overflow: scroll">' + hightlighted + '</div>';
       $pre.html(resultText ? hightlighted : brString);
 
       if (lang) {
